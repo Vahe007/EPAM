@@ -10,7 +10,8 @@ process.stdin.on('data', (c) => {
     if (data === '.exit') {
         console.log(`Thank you ${os.userInfo().username}, goodbye!`)
         process.exit(0)
-    } else if (data === 'os --cpus') {
+    }
+    else if (data === 'os --cpus') {
         const cpus = os.cpus()
         console.log(`The amount of CPU cores is ${cpus.length}`)
         cpus.forEach((core, i) => {
