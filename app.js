@@ -1,4 +1,4 @@
-const os = require('os')
+import os from 'os'
 
 process.stdin.setEncoding('utf8');
 
@@ -47,4 +47,5 @@ process.stdin.on('data', (c) => {
 
 process.on('SIGINT', () => {
     console.log(`Thank you ${os.userInfo().username}, goodbye!`)
+    process.exit(0)
 })
