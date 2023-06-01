@@ -42,41 +42,24 @@ process.stdin.on('data', (c) => {
 
 
     else if (data === 'ls') {
-        fs.readdir(process.cwd(), (err, files) => {
+        fs.readdirSync(process.cwd(), (err, files) => {
             if (err) {
                 console.log(err)
             } else {
                 files.sort((f1, f2) => {
-                    let isF1Directory
-                    let isF2Directory
-                    fs.stat(f1, (err, data) => {
-                        if (err) console.log(err.message)
-                        else {
-                            isF1Directory = data.isDirectory
-                        }
-                    })
-                    fs.stat(f2, (err, data) => {
-                        if (err) console.log(err.message)
-                        else {
-                            isF2Directory = data.isDirectory
-                        }
-                    })
+                    let isF1Directory = isDirectory(f1)
+                    let isF2Directory = isDirectory(f2)
+                    console.log(isDirectory(f1));
+                    console.log(isF1Directory + " " + isF2Directory);
                     if (isF1Directory && !isF2Directory) {
-                        return 1
-                    } else if (!isF1Directory && isF2Directory) {
                         return -1
+                    } else if (!isF1Directory && isF2Directory) {
+                        return 1
                     }
                     return f1.localeCompare(f2)
                 })
-                console.log("asdad " + files[0].isDirectory)
                 files.forEach((file, index) => {
-                    
-                    fs.stat(file, (err, stat) => {
-                        if (err) console.log(err.message)
-                        else {
-                            console.log(`${index} ${file} ${stat.isDirectory() ? 'directory' : 'file'}`)
-                        }
-                    })
+                    console.log(file)
                 })
             }
         })
@@ -114,10 +97,20 @@ process.stdin.on('data', (c) => {
 
 function pathExists(path) {
     fs.exists(path, (e) => {
+        console.log('e is ' + e);
         return e ? true : false
     })
 }
-
+function isDirectory(path) {
+    let res;
+    fs.stat(path, (err, stat) => {
+        if (err) console.log(err.message)
+        else {
+            res = stat.isDirectory()
+        }
+    })
+    return res;
+}
 
 process.on('SIGINT', () => {
     console.log(`\nThank you ${os.userInfo().username}, goodbye!`)
