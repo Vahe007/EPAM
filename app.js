@@ -3,7 +3,7 @@ import fs from 'fs'
 let maxDepth = 0
 let deepestDir = ''
 
-function findDeepestDirectory(path, depth) {
+function deepestDirectory(path, depth) {
     const files = fs.readdirSync(path, { withFileTypes: true })
     files.forEach((file) => {
         if (file.isDirectory()) {
@@ -13,13 +13,12 @@ function findDeepestDirectory(path, depth) {
                 maxDepth = depth
                 deepestDir = path
             }
-            findDeepestDirectory(newPath, newDepth)
+            deepestDirectory(newPath, newDepth)
         }
     })
 }
-findDeepestDirectory(process.cwd(), 0)
+deepestDirectory(process.cwd(), 0)
 
-console.log('deepest ' + deepestDir)
-// fs.appendFile(`${deepestDir}/file1.txt`, 'hello world', (err) => {
-//     if (err) console.log(err.message)
-// })
+fs.appendFile(`${deepestDir}/file.txt`, 'hello world', (err) => {
+    if (err) console.log(err.message)
+})
