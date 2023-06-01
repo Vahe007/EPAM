@@ -9,9 +9,6 @@ process.stdout.write('$ ')
 process.stdin.on('data', (c) => {
     const data = c.toString().trim()
     const [arg1, arg2, arg3] = data.split(' ')
-
-    console.log('arg1 ' + arg2);
-
     if (data === '.exit') {
         console.log(`Thank you ${os.userInfo().username}, goodbye!`)
         process.exit(0)
@@ -44,13 +41,50 @@ process.stdin.on('data', (c) => {
     }
 
 
-
+    else if (data === 'ls') {
+        fs.readdir(process.cwd(), (err, files) => {
+            if (err) {
+                console.log(err)
+            } else {
+                files.sort((f1, f2) => {
+                    let isF1Directory
+                    let isF2Directory
+                    fs.stat(f1, (err, data) => {
+                        if (err) console.log(err.message)
+                        else {
+                            isF1Directory = data.isDirectory
+                        }
+                    })
+                    fs.stat(f2, (err, data) => {
+                        if (err) console.log(err.message)
+                        else {
+                            isF2Directory = data.isDirectory
+                        }
+                    })
+                    if (isF1Directory && !isF2Directory) {
+                        return 1
+                    } else if (!isF1Directory && isF2Directory) {
+                        return -1
+                    }
+                    return f1.localeCompare(f2)
+                })
+                console.log("asdad " + files[0].isDirectory)
+                files.forEach((file, index) => {
+                    
+                    fs.stat(file, (err, stat) => {
+                        if (err) console.log(err.message)
+                        else {
+                            console.log(`${index} ${file} ${stat.isDirectory() ? 'directory' : 'file'}`)
+                        }
+                    })
+                })
+            }
+        })
+    }
     else if (arg1 === 'add') {
-
         fs.appendFile(arg2, '', (err) => {
             if (err) console.log(err.message)
         })
-
     }
     else if (arg1 === 'rn') {
         if (pathExists(arg2)) {
@@ -71,9 +105,6 @@ process.stdin.on('data', (c) => {
             if (err) console.log(err.message)
         })
     }
-
-
-
     else {
         console.log("Invalid input, try another command")
     }
