@@ -81,7 +81,7 @@ process.stdin.on('data', (c) => {
     else if (arg1 === 'mv') {
         console.log("directory " + `${process.cwd()}/${arg2}`)
         if (pathExists(arg2)) {
-            console.log('Path does not exist, try again')
+            console.log('Path does not exist')
         } else {
             fs.rename(`${process.cwd()}/${arg2}`, `${arg3}/arg2`, cb)
         }
