@@ -39,59 +39,64 @@ process.stdin.on('data', (c) => {
     else if (data === 'os --memory') {
         console.log(`Memory is ${os.totalmem()}`)
     }
-
-
     else if (data === 'ls') {
-        fs.readdirSync(process.cwd(), (err, files) => {
+        fs.readdir(process.cwd(), { withFileTypes: true }, (err, files) => {
             if (err) {
                 console.log(err)
             } else {
                 files.sort((f1, f2) => {
-                    let isF1Directory = isDirectory(f1)
-                    let isF2Directory = isDirectory(f2)
-                    console.log(isDirectory(f1));
-                    console.log(isF1Directory + " " + isF2Directory);
-                    if (isF1Directory && !isF2Directory) {
+                    if (f1.isDirectory() && f2.isFile()) {
                         return -1
-                    } else if (!isF1Directory && isF2Directory) {
+                    } else if (f1.isFile() && f2.isDirectory()) {
                         return 1
                     }
-                    return f1.localeCompare(f2)
+                    return f1.name.localeCompare(f2.name)
                 })
+                const index = '(index)'.padEnd(8)
+                const name = '"Name"'.padEnd(20)
+                console.log(`${index} ${name} "Type"`)
                 files.forEach((file, index) => {
-                    console.log(file)
+                    console.log(`${index.toString().padEnd(8)} ${file.name.padEnd(20)} ${file.isDirectory() ? 'directory' : 'file'}`)
                 })
             }
         })
     }
     else if (arg1 === 'add') {
-        fs.appendFile(arg2, '', (err) => {
-            if (err) console.log(err.message)
-        })
+        fs.appendFile(arg2, '', cb)
     }
     else if (arg1 === 'rn') {
         if (pathExists(arg2)) {
             console.log('Path does not exist, try again')
         } else {
-            fs.rename(arg2, arg3, (err) => {
-                if (err) console.log(err.message)
-            })
+            fs.rename(arg2, arg3, cb)
         }
     }
     else if (arg1 === 'cp') {
-        fs.copyFile(arg2, arg3, (err) => {
-            if (err) console.log(err.message)
-        })
+        if (pathExists(arg2)) {
+            console.log('Path does not exist, try again')
+        } else {
+            fs.copyFile(arg2, arg3, cb)
+        }
+    }
+    else if (arg1 === 'mv') {
+        console.log("directory " + `${process.cwd()}/${arg2}`)
+        if (pathExists(arg2)) {
+            console.log('Path does not exist, try again')
+        } else {
+            fs.rename(`${process.cwd()}/${arg2}`, `${arg3}/arg2`, cb)
+        }
     }
     else if (arg1 === 'rm') {
-        fs.rm(arg2, (err) => {
-            if (err) console.log(err.message)
-        })
+        if (pathExists(arg2)) {
+            console.log('Path does not exist, try again')
+        } else {
+            fs.rm(arg2, cb)
+        }
     }
     else {
         console.log("Invalid input, try another command")
     }
-    process.stdout.write('$ ')
+    // process.stdout.write('$ ')
 })
 
 
@@ -101,15 +106,9 @@ function pathExists(path) {
         return e ? true : false
     })
 }
-function isDirectory(path) {
-    let res;
-    fs.stat(path, (err, stat) => {
-        if (err) console.log(err.message)
-        else {
-            res = stat.isDirectory()
-        }
-    })
-    return res;
+
+function cb(err) {
+    if (err) console.log(err.message)
 }
 
 process.on('SIGINT', () => {
