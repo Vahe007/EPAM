@@ -1,4 +1,5 @@
 import os from 'os'
+import fs from 'fs'
 
 process.stdin.setEncoding('utf8');
 
@@ -6,7 +7,11 @@ console.log(`Welcome ${os.userInfo().username}`)
 process.stdout.write('$ ')
 
 process.stdin.on('data', (c) => {
-    const data = c.replace(/\n/g, '') //removing the line break at the end of the string
+    const data = c.toString().trim()
+    const [arg1, arg2, arg3] = data.split(' ')
+
+    console.log('arg1 ' + arg2);
+
     if (data === '.exit') {
         console.log(`Thank you ${os.userInfo().username}, goodbye!`)
         process.exit(0)
@@ -36,7 +41,39 @@ process.stdin.on('data', (c) => {
     }
     else if (data === 'os --memory') {
         console.log(`Memory is ${os.totalmem()}`)
-    } 
+    }
+
+
+
+    else if (arg1 === 'add') {
+
+        fs.appendFile(arg2, '', (err) => {
+            if (err) console.log(err.message)
+        })
+
+    }
+    else if (arg1 === 'rn') {
+        if (pathExists(arg2)) {
+            console.log('Path does not exist, try again')
+        } else {
+            fs.rename(arg2, arg3, (err) => {
+                if (err) console.log(err.message)
+            })
+        }
+    }
+    else if (arg1 === 'cp') {
+        fs.copyFile(arg2, arg3, (err) => {
+            if (err) console.log(err.message)
+        })
+    }
+    else if (arg1 === 'rm') {
+        fs.rm(arg2, (err) => {
+            if (err) console.log(err.message)
+        })
+    }
+
+
+
     else {
         console.log("Invalid input, try another command")
     }
@@ -44,8 +81,14 @@ process.stdin.on('data', (c) => {
 })
 
 
+function pathExists(path) {
+    fs.exists(path, (e) => {
+        return e ? true : false
+    })
+}
+
 
 process.on('SIGINT', () => {
-    console.log(`Thank you ${os.userInfo().username}, goodbye!`)
+    console.log(`\nThank you ${os.userInfo().username}, goodbye!`)
     process.exit(0)
 })
