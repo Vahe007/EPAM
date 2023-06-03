@@ -27,30 +27,48 @@ function transformFn(operation) {
     })
 }
 
-
 process.stdin.on('data', (command) => {
     const [input, output, operation] = command.toString().trim().split(' ')
+
+    if (input === '.exit') {
+        process.exit(0)
+    }
+
     const readableStream = fs.createReadStream(input)
     const writableStream = fs.createWriteStream(output)
 
-    readableStream.on('error', (e) => {
-        console.log(e.message)
-    })
-    writableStream.on('error', (e) => {
-        console.log(e.message)
-    })
-
-    readableStream.on('end', () => {
-        console.log('Operation completed')
-    })
-    // readableStream.close()
-    // writableStream.close()
 
     const transform = transformFn(operation)
 
     readableStream.pipe(transform).pipe(writableStream)
+    
+    readableStream.on('error', (e) => {
+        if (e) {
+            console.log("message " + e.message)
+            readableStream.unpipe(writableStream)
+            return
+        }
+    })
+    writableStream.on('error', (e) => {
+        if (e) {
+            return console.log(e.message)
+        }
+    })
+
+    readableStream.on('end', (e) => {
+        if (e) {
+            console.log(e.message);
+        }
+        return console.log('Operation completed')
+    })
+
 })
 
 
+// process.on('SIGNINT', () => {
+//     readableStream.destroy()
+//     writableStream.destroy()
+//     process.exit(0)
+// })
 
 
