@@ -22,52 +22,38 @@ function transformFn(operation) {
                     break
                 default:
                     console.log('Invalid command')
+                    return 'Invalid command'
             }
         }
     })
 }
 
-process.stdin.on('data', (command) => {
-    const [input, output, operation] = command.toString().trim().split(' ')
 
-    if (input === '.exit') {
-        process.exit(0)
+const [node, path, input, output, command] = process.argv
+
+const readableStream = fs.createReadStream(input)
+const writableStream = fs.createWriteStream(output)
+
+
+const transform = transformFn(command)
+
+readableStream.pipe(transform).pipe(writableStream)
+
+readableStream.on('error', (e) => {
+    if (e) {
+        console.log("message " + e.message)
+        readableStream.unpipe(writableStream)
+        return
     }
-
-    const readableStream = fs.createReadStream(input)
-    const writableStream = fs.createWriteStream(output)
-
-
-    const transform = transformFn(operation)
-
-    readableStream.pipe(transform).pipe(writableStream)
-    
-    readableStream.on('error', (e) => {
-        if (e) {
-            console.log("message " + e.message)
-            readableStream.unpipe(writableStream)
-            return
-        }
-    })
-    writableStream.on('error', (e) => {
-        if (e) {
-            return console.log(e.message)
-        }
-    })
-
-    readableStream.on('end', (e) => {
-        if (e) {
-            console.log(e.message);
-        }
-    })
-
+})
+writableStream.on('error', (e) => {
+    if (e) {
+        return console.log(e.message)
+    }
 })
 
-
-// process.on('SIGNINT', () => {
-//     readableStream.destroy()
-//     writableStream.destroy()
-//     process.exit(0)
-// })
-
-
+readableStream.on('end', (e) => {
+    if (e) {
+        console.log(e.message);
+    }
+})
