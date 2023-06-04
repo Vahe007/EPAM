@@ -59,7 +59,6 @@ process.stdin.on('data', (command) => {
         if (e) {
             console.log(e.message);
         }
-        return console.log('Operation completed')
     })
 
 })
