@@ -29,6 +29,10 @@ class Tester {
                 reject(e.message)
             })
 
+            childProcess.on('close', () => {
+                console.log('Child process is closed')
+            })
+
             childProcess.on('exit', () => {
                 commandSuccess = true
                 duration = new Date() - startingTime
@@ -57,8 +61,10 @@ class Tester {
     }
 }
 
+
+const [node, path, command, args, timeout] = process.argv
 const tester = new Tester()
-tester.test('node', ['-v']).then((m) => {
+tester.test(command, [args], timeout).then((m) => {
     console.log(m)
 }).catch(e => { console.log(e) })
 
