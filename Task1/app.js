@@ -36,8 +36,6 @@ class Tester {
                 writeJson(file, this.res, resolve, reject)
             }, timeout)
         })
-
-
     }
 }
 
