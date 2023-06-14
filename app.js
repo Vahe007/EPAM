@@ -40,19 +40,26 @@ export function convertFile(file, convertedFile) {
 
 
 if (isMainThread) {
-    const workers = []
-    for (let i = 0; i < 10; i++) {
-        const worker = new Worker('./worker.js')
-        workers.push(worker)
-    }
-    readDir('csvFiles').then((files) => {
-        files.forEach((file, index) => {
-            const currentWoker = workers[index]
-            currentWoker.on('online', () => {
-                currentWoker.postMessage(file)
+    new Promise((resolve, reject) => {
+        const path = 'csvFiles'
+        if (!fs.existsSync(path)) {
+            reject('Path does not exist')
+        }
+        const workers = []
+        for (let i = 0; i < 10; i++) {
+            const worker = new Worker('./worker.js')
+            workers.push(worker)
+        }
+        readDir(path).then((files) => {
+            files.forEach((file, index) => {
+                const currentWoker = workers[index]
+                currentWoker.on('online', () => {
+                    currentWoker.postMessage(file)
+                })
             })
+        }).catch((error) => {
+            console.log(error)
         })
-    }).catch((error) => {
-        console.log(error)
     })
+
 }
