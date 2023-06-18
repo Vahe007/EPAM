@@ -1,6 +1,7 @@
 import { isMainThread, Worker, parentPort } from 'worker_threads'
 import fs from 'fs'
 import csv from 'csv-parser'
+import http, { get } from 'http'
 
 function readDir(path) {
     return new Promise((resolve, reject) => {
@@ -39,8 +40,8 @@ export function convertFile(file, convertedFile) {
 }
 
 
-if (isMainThread) {
-    new Promise((resolve, reject) => {
+function convertFiles() {
+    return new Promise((resolve, reject) => {
         const path = 'csvFiles'
         if (!fs.existsSync(path)) {
             reject('Path does not exist')
@@ -61,5 +62,59 @@ if (isMainThread) {
             console.log(error)
         })
     })
-
 }
+
+
+const server = http.createServer(function (req, res) {
+    if (req.method === 'POST' && req.url === '/exports') {
+        convertFiles()
+    }
+    else if (req.method === 'GET' && req.url.startsWith('/files')) {
+        fs.readdir('./converted', (err, files) => {
+            if (err) console.log(err.message);
+            else {
+                const fileName = getParams(req.url)
+                if (fileName) {
+                    fs.readFile(`${process.cwd()}/converted/${fileName}.json`, (err, data) => {
+                        if (err) sendResponse(res, 404, 'text/plain', 'Not Found');
+                        else { sendResponse(res, 200, 'text/plain', data.toString()); }
+                    })
+                }
+                else {
+                    sendResponse(res, 200, 'application/json', JSON.stringify(files))
+                }
+            }
+        })
+    }
+    else if (req.method === 'DELETE' && req.url.startsWith('/files')) {
+        const fileName = getParams(req.url)
+        if (fileName) {
+            fs.unlink(`${process.cwd()}/converted/${fileName}.json`, (err) => {
+                if (err) {
+                    console.log('error', err.message)
+                    sendResponse(res, 404, 'text/plain', 'Not Found')
+                }
+                else { sendResponse(res, 200, 'text/plain', `File with ${fileName} name was successfully deleted`) }
+            })
+        }
+    }
+})
+
+server.listen(8000, () => {
+    console.log('Listening to port 8000 🚀');
+})
+
+
+function getParams(url) {
+    const indexOf = url.indexOf('/:');
+    if (indexOf < 0) return '';
+    const fileName = url.slice(indexOf + 2);
+    return fileName;
+}
+
+function sendResponse(res, statusCode, type, content) {
+    res.statusCode = statusCode;
+    res.setHeader('Content-Type', type);
+    res.end(content);
+}
+
