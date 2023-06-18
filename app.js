@@ -1,7 +1,21 @@
 import { isMainThread, Worker, parentPort } from 'worker_threads'
 import fs from 'fs'
 import csv from 'csv-parser'
-import http, { get } from 'http'
+import http from 'http'
+import path from 'path'
+
+function getParams(url) {
+    const indexOf = url.indexOf('/:');
+    if (indexOf < 0) return '';
+    const fileName = url.slice(indexOf + 2);
+    return fileName;
+}
+
+function sendResponse(res, statusCode, type, content) {
+    res.statusCode = statusCode;
+    res.setHeader('Content-Type', type);
+    res.end(content);
+}
 
 function readDir(path) {
     return new Promise((resolve, reject) => {
@@ -15,7 +29,7 @@ function readDir(path) {
 }
 
 
-export function convertFile(file, convertedFile) {
+function convertFile(file, convertedFile) {
     return new Promise((res, rej) => {
         const results = []
         let recordCount = 0
@@ -40,23 +54,17 @@ export function convertFile(file, convertedFile) {
 }
 
 
-function convertFiles() {
+function convertFiles(res, convertedDir) {
     return new Promise((resolve, reject) => {
-        const path = 'csvFiles'
-        if (!fs.existsSync(path)) {
+        if (!fs.existsSync('csvFiles')) {
             reject('Path does not exist')
         }
-        const workers = []
-        for (let i = 0; i < 10; i++) {
-            const worker = new Worker('./worker.js')
-            workers.push(worker)
-        }
-        readDir(path).then((files) => {
-            files.forEach((file, index) => {
-                const currentWoker = workers[index]
-                currentWoker.on('online', () => {
-                    currentWoker.postMessage(file)
-                })
+        readDir('csvFiles').then((files) => {
+            files.forEach((file) => {
+                const convertedPath = `${path.parse(file.name).name}.json`
+                convertFile(`csvFiles/${file.name}`, `${convertedDir}/${convertedPath}`).then((data) => {
+                    console.log(data)
+                }).catch(error => sendResponse(res, 404, 'text/plain', error))
             })
         }).catch((error) => {
             console.log(error)
@@ -64,14 +72,21 @@ function convertFiles() {
     })
 }
 
-
 const server = http.createServer(function (req, res) {
     if (req.method === 'POST' && req.url === '/exports') {
-        convertFiles()
+        req.on('data', (data) => {
+            convertedDir = JSON.parse(data.toString())
+            fs.mkdir(convertedDir, (err) => {
+                if (err) sendResponse(res, 500, 'text/plain', error)
+            })
+            convertFiles(res, convertedDir).then((msg) => {sendResponse(res, 200, 'text/plain', msg)}).catch(error => sendResponse(res, 500, 'text/plain', error))
+        })
     }
     else if (req.method === 'GET' && req.url.startsWith('/files')) {
-        fs.readdir('./converted', (err, files) => {
-            if (err) console.log(err.message);
+        fs.readdir(convertedDir, (err, files) => {
+            if (err) {
+                sendResponse(res, 500, 'text/plain', err.message);
+            }
             else {
                 const fileName = getParams(req.url)
                 if (fileName) {
@@ -89,7 +104,7 @@ const server = http.createServer(function (req, res) {
     else if (req.method === 'DELETE' && req.url.startsWith('/files')) {
         const fileName = getParams(req.url)
         if (fileName) {
-            fs.unlink(`${process.cwd()}/converted/${fileName}.json`, (err) => {
+            fs.unlink(`${process.cwd()}/${convertedDir}/${fileName}.json`, (err) => {
                 if (err) {
                     console.log('error', err.message)
                     sendResponse(res, 404, 'text/plain', 'Not Found')
@@ -103,18 +118,4 @@ const server = http.createServer(function (req, res) {
 server.listen(8000, () => {
     console.log('Listening to port 8000 🚀');
 })
-
-
-function getParams(url) {
-    const indexOf = url.indexOf('/:');
-    if (indexOf < 0) return '';
-    const fileName = url.slice(indexOf + 2);
-    return fileName;
-}
-
-function sendResponse(res, statusCode, type, content) {
-    res.statusCode = statusCode;
-    res.setHeader('Content-Type', type);
-    res.end(content);
-}
 
