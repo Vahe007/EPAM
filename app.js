@@ -54,15 +54,15 @@ function convertFile(file, convertedFile) {
 }
 
 
-function convertFiles(res, convertedDir) {
+function convertFiles(res, csvPath) {
     return new Promise((resolve, reject) => {
-        if (!fs.existsSync('csvFiles')) {
+        if (!fs.existsSync(csvPath)) {
             reject('Path does not exist')
         }
-        readDir('csvFiles').then((files) => {
+        readDir(csvPath).then((files) => {
             files.forEach((file) => {
                 const convertedPath = `${path.parse(file.name).name}.json`
-                convertFile(`csvFiles/${file.name}`, `${convertedDir}/${convertedPath}`).then((data) => {
+                convertFile(`${csvPath}/${file.name}`, `converted/${convertedPath}`).then((data) => {
                     console.log(data)
                 }).catch(error => sendResponse(res, 404, 'text/plain', error))
             })
@@ -75,15 +75,15 @@ function convertFiles(res, convertedDir) {
 const server = http.createServer(function (req, res) {
     if (req.method === 'POST' && req.url === '/exports') {
         req.on('data', (data) => {
-            convertedDir = JSON.parse(data.toString())
-            fs.mkdir(convertedDir, (err) => {
-                if (err) sendResponse(res, 500, 'text/plain', error)
+            const csvPath = JSON.parse(data.toString())
+            fs.mkdir('converted', (err) => {
+                if (err) sendResponse(res, 500, 'text/plain', err)
             })
-            convertFiles(res, convertedDir).then((msg) => {sendResponse(res, 200, 'text/plain', msg)}).catch(error => sendResponse(res, 500, 'text/plain', error))
+            convertFiles(res, csvPath).then((msg) => { sendResponse(res, 200, 'text/plain', msg) }).catch(error => sendResponse(res, 500, 'text/plain', error))
         })
     }
     else if (req.method === 'GET' && req.url.startsWith('/files')) {
-        fs.readdir(convertedDir, (err, files) => {
+        fs.readdir('converted', (err, files) => {
             if (err) {
                 sendResponse(res, 500, 'text/plain', err.message);
             }
@@ -91,7 +91,7 @@ const server = http.createServer(function (req, res) {
                 const fileName = getParams(req.url)
                 if (fileName) {
                     fs.readFile(`${process.cwd()}/converted/${fileName}.json`, (err, data) => {
-                        if (err) sendResponse(res, 404, 'text/plain', 'Not Found');
+                        if (err) { sendResponse(res, 404, 'text/plain', err.message); }
                         else { sendResponse(res, 200, 'text/plain', data.toString()); }
                     })
                 }
@@ -104,7 +104,7 @@ const server = http.createServer(function (req, res) {
     else if (req.method === 'DELETE' && req.url.startsWith('/files')) {
         const fileName = getParams(req.url)
         if (fileName) {
-            fs.unlink(`${process.cwd()}/${convertedDir}/${fileName}.json`, (err) => {
+            fs.unlink(`${process.cwd()}/converted/${fileName}.json`, (err) => {
                 if (err) {
                     console.log('error', err.message)
                     sendResponse(res, 404, 'text/plain', 'Not Found')
