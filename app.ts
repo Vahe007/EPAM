@@ -1,7 +1,7 @@
 import { Worker, isMainThread } from 'worker_threads';
 import { readDir, getParams, sendResponse } from './utils';
-import * as http from 'http';
-import * as fs from 'fs';
+import http from 'http';
+import fs from 'fs';
 
 function performConversion(): Promise<string> {
   return new Promise((res, rej) => {
@@ -43,44 +43,35 @@ if (isMainThread) {
     if (method === 'POST' && url === '/exports') {
       performConversion().then((msg: string) => {
         sendResponse(res, 200, 'text/plain', msg);
-      });
-    } else if (method === 'GET' && url.startsWith('/files')) {
+      })
+    } 
+    else if (method === 'GET' && url.startsWith('/files')) {
       readDir('converted', '.json')
         .then((files: string[]) => {
           if (params !== undefined) {
-            fs.readFile(`converted/${params}.json`, (err, data) => {
-              if (err) {
-                sendResponse(res, 404, 'text/plain', err.message);
-              } else {
-                sendResponse(res, 200, 'application/json', data.toString());
-              }
-            });
-          } else {
-            sendResponse(res, 200, 'application/json', JSON.stringify(files));
+            params ?
+              fs.readFile(`converted/${params}.json`, (err, data) => {
+                err ? sendResponse(res, 404, 'text/plain', err.message) : sendResponse(res, 200, 'application/json', data.toString())
+              }) :
+              sendResponse(res, 200, 'application/json', JSON.stringify(files));
           }
         })
         .catch((error: any) => sendResponse(res, 404, 'text/plain', error));
-    } else if (method === 'DELETE' && url.startsWith('/files')) {
-      if (params !== undefined) {
-        fs.unlink(`converted/${params}.json`, (err) => {
-          if (err) {
-            sendResponse(res, 404, 'text/plain', err.message);
-          } else {
-            sendResponse(
-              res,
-              200,
-              'text/plain',
-              `File with ${params} name was successfully deleted`
-            );
-          }
-        });
-      } else {
-        sendResponse(res, 404, 'text/plain', 'Missing file name');
-      }
-    } else {
-      sendResponse(res, 404, 'text/plain', 'URL is not valid');
+    } 
+    else if (method === 'DELETE' && url.startsWith('/files')) {
+      fs.unlink(`converted/${params}.json`, (err) => {
+        err ? sendResponse(res, 404, 'text/plain', err.message) : sendResponse(
+          res,
+          200,
+          'text/plain',
+          `File with ${params} name was successfully deleted`
+        );
+      })
+    } 
+    else {
+      sendResponse(res, 404, 'text/plain', 'URL is not valid')
     }
-  });
+  })
 
   const port = 8000;
   server.listen(port, () => {
