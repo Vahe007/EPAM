@@ -1,9 +1,12 @@
 import { parentPort } from "worker_threads";
-import { convertFiles } from "./app.js";
+import { convertFile } from "./utils.js";
 
 parentPort.on('message', (file) => {
     const target = `csvFiles/${file}`
-    convertFiles(target).then((val) => {
+    convertFile(target).then((val) => {
         parentPort.postMessage(val)
-    }).catch((err) => console.log(err))
+        parentPort.terminate()
+    }).catch((err) => {
+        parentPort.postMessage(err)
+    })
 })
