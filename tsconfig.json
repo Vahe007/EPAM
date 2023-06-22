@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "module": "CommonJS",
+        "target": "ES6",
+        "outDir": "dist",
+        "rootDir": "",
+        "esModuleInterop": true
+    },
+    "exclude": [
+        "node_modules", ".idea"
+    ]
+}
