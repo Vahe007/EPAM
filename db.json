@@ -1,0 +1,16 @@
+[
+  {
+    "id": "725",
+    "name": "Vlad",
+    "age": 89,
+    "gender": "male",
+    "status": true
+  },
+  {
+    "id": "565",
+    "name": "Fitness",
+    "age": 89,
+    "gender": "male",
+    "status": false
+  }
+]
