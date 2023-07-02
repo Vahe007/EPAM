@@ -11,14 +11,27 @@ const controller = new UserController();
 const authMiddleware = (req, res, next) => {
     const authKey = req.get('api-key');
     if (authKey !== 'secret key') {
-        return next('Invalid key')
+        return next(401)
     }
     next()
 }
 
 function errorHandler(error, req, res, next) {
-    if (error) {
-        return req.status(200).send(error);
+    switch (error) {
+        case 401:
+            res.status(401).send('401 Unauthorized');
+            break;
+        case 400:
+            res.status(400).send('400 Bad Request');
+            break;
+        case 404:
+            res.status(404).send('400 Bad Request');
+            break;
+        case 422:
+            res.status(422).send('422 Unprocessable Entity');
+            break;
+        default:
+            res.status(500).send('500 server error');
     }
 }
 

@@ -8,7 +8,8 @@ export class UserService {
     }
 
     getAll() {
-        return JSON.parse(fs.readFileSync('db.json'));
+        const data = fs.readFileSync('db.json').toString();
+        return data ? JSON.parse(data) : 'No User found'
     }
 
     create(payload) {
@@ -23,7 +24,8 @@ export class UserService {
 
     activate(id) {
         let activated = {};
-        let users = fs.readFileSync('db.json');
+        let users = fs.readFileSync('db.json').toString();
+        if (!users) return;
         users = JSON.parse(users).map((user) => {
             if (Number(user.id) === Number(id)) {
                 activated = user;
@@ -38,7 +40,8 @@ export class UserService {
 
     delete(id) {
         const removedUser = this.get(id);
-        let users = fs.readFileSync('db.json');
+        let users = fs.readFileSync('db.json').toString();
+        if (!users) return;
         users = JSON.parse(users).filter((user) => (Number(user.id) !== Number(id)));
         fs.writeFileSync('db.json', JSON.stringify(users, null, 2));
         return removedUser;
