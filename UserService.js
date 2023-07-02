@@ -13,7 +13,7 @@ export class UserService {
 
     create(payload) {
         const { name, age, gender, status = false } = payload;
-        const newUser = { id: Math.floor(1000 * Math.random()).toString(), name, age, gender, status };
+        const newUser = { id: Math.floor(1000 * Math.random()).toString(), name, age, gender, status, creationDate: new Date(), updatingDate: new Date() };
         let users = fs.readFileSync('db.json');
         users = users.toString() ? JSON.parse(users) : [];
         users.push(newUser);
@@ -28,6 +28,7 @@ export class UserService {
             if (Number(user.id) === Number(id)) {
                 activated = user;
                 user.status = true;
+                user.updatingDate = new Date();
             }
             return user;
         })

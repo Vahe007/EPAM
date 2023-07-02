@@ -32,7 +32,7 @@ router.get('/users', (req, res) => {
 })
 
 router.get('/users/:id', (req, res, next) => {
-    controller.get(req, res);
+    controller.get(req, res, next);
 })
 
 router.post('/create', (req, res) => {
